@@ -1,2 +1,2 @@
 # kafkaposted
-Concrete implementation of `posted`
+Concrete implementation of `posted` for Kafka
