@@ -30,6 +30,7 @@ class KafkaBroker(MsgBrokerBase):
     """
     Message broker for Apache Kafka.
     """
+
     def __init__(self, **config):
         super().__init__(**config)
         self._subscriptions = {}
@@ -37,11 +38,15 @@ class KafkaBroker(MsgBrokerBase):
 
     def write(self, message: Any, channel: str):
         if channel not in self._admin.list_topics():
-            self._admin.create_topics([NewTopic(name=channel, num_partitions=1, replication_factor=1)])
+            self._admin.create_topics(
+                [NewTopic(name=channel, num_partitions=1, replication_factor=1)]
+            )
             assert self.read(channel) == NoMsg  # validate topic creation
         kwargs = dict(value=message)
         if message is None:
-            kwargs['key'] = b''  # kafka-python does not allow (None, None) as a key-value pair
+            kwargs[
+                'key'
+            ] = b''  # kafka-python does not allow (None, None) as a key-value pair
         future = self._producer.send(channel, **kwargs)
         future.get(timeout=60)
 
@@ -53,17 +58,19 @@ class KafkaBroker(MsgBrokerBase):
             return next(consumer).value
         except StopIteration:
             return NoMsg
-        
+
     def subscribe(self, channel: str, callback: Callable[[Any], None]):
         def consume(stop_event):
-            consumer = self._mk_consumer(channel, consumer_timeout_ms=100, auto_offset_reset='earliest')
+            consumer = self._mk_consumer(
+                channel, consumer_timeout_ms=100, auto_offset_reset='earliest'
+            )
             while not stop_event.is_set():
                 try:
                     msg = next(consumer).value
                     callback(msg)
                 except StopIteration:
                     pass  # No message, continue the loop
-                
+
         stop_event = threading.Event()
         self._subscriptions.setdefault(channel, []).append(stop_event)
         self._executor.submit(consume, stop_event)
@@ -72,24 +79,17 @@ class KafkaBroker(MsgBrokerBase):
         for sub in self._subscriptions.get(channel, []):
             sub.set()
         self._subscriptions.pop(channel, None)
-    
+
     @cached_property
     def _admin(self):
         return KafkaAdminClient(**self._config)
 
     @cached_property
     def _producer(self):
-        config = {
-            'value_serializer': _dflt_serializer,
-            **self._config
-        }
+        config = {'value_serializer': _dflt_serializer, **self._config}
         return KafkaProducer(**config)
-    
+
     @lru_cache
     def _mk_consumer(self, channel: str, **kwargs):
-        config = {
-            'value_deserializer': _dflt_deserializer,
-            **kwargs,
-            **self._config
-        }
+        config = {'value_deserializer': _dflt_deserializer, **kwargs, **self._config}
         return KafkaConsumer(channel, **config)

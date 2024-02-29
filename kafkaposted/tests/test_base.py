@@ -66,8 +66,10 @@ def test_on_demand_consumption(broker: KafkaBroker, message, channel):
 )
 def test_reactive_consumption(broker: KafkaBroker, message, channel):
     sub_msg = {}
+
     def callback(msg):
         sub_msg['content'] = msg
+
     broker.subscribe(channel, callback)
     broker.write(message, channel)
     sleep(0.5)
