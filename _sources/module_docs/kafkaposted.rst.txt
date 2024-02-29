@@ -1,0 +1,4 @@
+kafkaposted
+===========
+.. automodule:: kafkaposted
+   :members:

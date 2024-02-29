@@ -1,0 +1,7 @@
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   module_docs/kafkaposted
+   module_docs/kafkaposted/base
+   module_docs/kafkaposted/tests/test_base

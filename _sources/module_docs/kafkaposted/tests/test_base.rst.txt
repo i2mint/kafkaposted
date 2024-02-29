@@ -1,0 +1,4 @@
+kafkaposted.tests.test_base
+===========================
+.. automodule:: kafkaposted.tests.test_base
+   :members:
