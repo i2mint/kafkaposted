@@ -19,18 +19,7 @@ class KafkaBroker(MsgBrokerBase):
     """
     Message broker for Apache Kafka.
     """
-
-    # def __init__(
-    #     self,
-    #     *,
-    #     encoder: Callable[[Any], bytes] = None,
-    #     decoder: Callable[[bytes], Any] = None,
-    #     **kwargs
-    # ):
-    #     super().__init__(encoder=encoder, decoder=decoder, **kwargs)
-    #     self._subscriptions = {}
-    #     self._executor = concurrent.futures.ThreadPoolExecutor()
-
+    
     def write(self, channel: str, message: Any):
         if channel not in self._admin.list_topics():
             self._admin.create_topics(
