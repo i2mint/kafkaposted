@@ -7,10 +7,7 @@ used in a multi-threaded environment, and it uses a thread pool to consume messa
 the Kafka topics.
 """
 
-import json
-import concurrent.futures
 from functools import cached_property, lru_cache
-from threading import Thread
 import threading
 from typing import Any, Callable
 from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
@@ -18,25 +15,23 @@ from kafka.admin import NewTopic
 from posted import MsgBrokerBase, NoMsg
 
 
-def _dflt_serializer(v: Any) -> bytes:
-    return json.dumps(v).encode('utf-8')
-
-
-def _dflt_deserializer(v: bytes) -> Any:
-    return json.loads(v.decode('utf-8'))
-
-
 class KafkaBroker(MsgBrokerBase):
     """
     Message broker for Apache Kafka.
     """
+    
+    # def __init__(
+    #     self,
+    #     *,
+    #     encoder: Callable[[Any], bytes] = None,
+    #     decoder: Callable[[bytes], Any] = None,
+    #     **kwargs
+    # ):
+    #     super().__init__(encoder=encoder, decoder=decoder, **kwargs)
+    #     self._subscriptions = {}
+    #     self._executor = concurrent.futures.ThreadPoolExecutor()
 
-    def __init__(self, **config):
-        super().__init__(**config)
-        self._subscriptions = {}
-        self._executor = concurrent.futures.ThreadPoolExecutor()
-
-    def write(self, message: Any, channel: str):
+    def write(self, channel: str, message: Any):
         if channel not in self._admin.list_topics():
             self._admin.create_topics(
                 [NewTopic(name=channel, num_partitions=1, replication_factor=1)]
@@ -86,10 +81,10 @@ class KafkaBroker(MsgBrokerBase):
 
     @cached_property
     def _producer(self):
-        config = {'value_serializer': _dflt_serializer, **self._config}
+        config = {'value_serializer': self._encoder, **self._config}
         return KafkaProducer(**config)
 
     @lru_cache
     def _mk_consumer(self, channel: str, **kwargs):
-        config = {'value_deserializer': _dflt_deserializer, **kwargs, **self._config}
+        config = {'value_deserializer': self._decoder, **kwargs, **self._config}
         return KafkaConsumer(channel, **config)

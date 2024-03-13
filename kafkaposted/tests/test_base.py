@@ -13,7 +13,7 @@ from time import sleep
 from kafka.admin import NewTopic
 from posted import NoMsg
 from posted.tests.utils import service_is_running, start_service, stop_service
-from posted.tests.common import EXISTING_CHANNEL, gen_test_mk_msg_broker_args
+from posted.tests.common import EXISTING_CHANNEL, gen_test_mk_msg_broker_args, base_test_on_demand_consumption, base_test_reactive_consumption
 
 from kafkaposted.base import KafkaBroker
 
@@ -45,7 +45,7 @@ def init_testing_data(broker: KafkaBroker):
     topics = broker._admin.list_topics()
     if topics:
         broker._admin.delete_topics(topics)
-        sleep(0.5)
+        sleep(0.2)
     broker._admin.create_topics(
         [NewTopic(name=EXISTING_CHANNEL, num_partitions=1, replication_factor=1)]
     )
@@ -55,29 +55,11 @@ def init_testing_data(broker: KafkaBroker):
     'message, channel', list(gen_test_mk_msg_broker_args()),
 )
 def test_on_demand_consumption(broker: KafkaBroker, message, channel):
-    assert broker.read(channel) is NoMsg  # queue is empty
-    broker.write(message, channel)
-    assert broker.read(channel) == message
-    assert broker.read(channel) is NoMsg  # queue is empty again
+    base_test_on_demand_consumption(broker, message, channel)
 
 
 @pytest.mark.parametrize(
     'message, channel', list(gen_test_mk_msg_broker_args()),
 )
 def test_reactive_consumption(broker: KafkaBroker, message, channel):
-    sub_msg = {}
-
-    def callback(msg):
-        sub_msg['content'] = msg
-
-    broker.subscribe(channel, callback)
-    broker.write(message, channel)
-    sleep(0.5)
-    assert sub_msg.get('content') == message
-
-    sub_msg = {}
-    broker.unsubscribe(channel)
-    sleep(0.5)
-    broker.write(message, channel)
-    sleep(0.5)
-    assert 'content' not in sub_msg
+    base_test_reactive_consumption(broker, message, channel)
