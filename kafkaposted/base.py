@@ -19,7 +19,7 @@ class KafkaBroker(MsgBrokerBase):
     """
     Message broker for Apache Kafka.
     """
-    
+
     def write(self, channel: str, message: Any):
         if channel not in self._admin.list_topics():
             self._admin.create_topics(
