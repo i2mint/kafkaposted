@@ -19,7 +19,7 @@ class KafkaBroker(MsgBrokerBase):
     """
     Message broker for Apache Kafka.
     """
-    
+
     # def __init__(
     #     self,
     #     *,
