@@ -22,7 +22,7 @@ from posted.tests.common import (
 
 from kafkaposted.base import KafkaBroker
 
-SERVICE_CONTAINER_NAME = 'kafkaposted-test'
+SERVICE_CONTAINER_NAME = 'kafkaposted_test'
 DOCKER_COMPOSE_FILEPATH = Path(
     os.path.dirname(os.path.abspath(__file__)), 'docker-compose.yml'
 )
